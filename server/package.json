@@ -1,18 +1,16 @@
 {
-  "name": "test3-book",
+  "name": "booklist-server",
   "version": "1.0.0",
-  "description": "longkong spider",
+  "description": "",
   "main": "spider.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "spider"
-  ],
-  "author": "xhc",
+  "author": "",
   "license": "ISC",
   "devDependencies": {
     "axios": "^0.18.0",
-    "cheerio": "^1.0.0-rc.2"
+    "cheerio": "^1.0.0-rc.2",
+    "mongoose": "^5.2.9"
   }
 }
