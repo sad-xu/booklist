@@ -62,15 +62,126 @@ function getMarknumOfBook(sort = -1, num = 10) {
 }
 
 
+
+/*
+*	5/4/3/2/1星比例  高/低  小说
+*	star  5 4 3 2 1
+*	sort
+* num
+*/
+// !!!!!  建议将progress字段修改为Array
+function getStarOfBook(star = 5, sort = -1, num = 10) {
+	let v
+	switch (star) {
+		case 1:
+			v = 1; break;
+		case 2:
+			v = 2; break;
+		case 3:
+			v = 3; break;
+		case 4:
+			v = 4; break;
+		case 5:
+			v = 5; break;
+		default:
+			v = 5;
+	}
+}
+
+
+/*
+*	本书 点赞数   最多  评论
+*	id
+*	
+*/
+function getStarnumOfCommentById(id = -1 ) {
+	return Bookdetail.aggregate(
+		[
+			{$match: {id: id}},
+			{$unwind: '$comment'},
+			{
+				$project: {
+					name: 1,
+					msg: '$comment.message',
+					num: '$comment.starnum'
+				}
+			}, {
+				$sort: {num: -1}
+			}, {
+				$limit: 10
+			}
+		]).then(res => {
+			return res
+		}).catch(err => console.log(err))
+}
+// 全部评论
+function getStarnumOfAllComment() {
+	return Bookdetail.aggregate(
+		[
+			{$unwind: '$comment'},
+			{
+				$project: {
+					name: 1,
+					msg: '$comment.message',
+					num: '$comment.starnum'
+				}
+			}, {
+				$sort: {num: -1}
+			}, {
+				$limit: 10
+			}
+		]).then(res => {
+			return res
+		}).catch(err => console.log(err))
+}
+
+
+/*
+*	最近更新
+*	num
+*/
+function getLastUpdate(num = 10) {
+	return Bookdetail.find({}, {update: 1, name: 1}).sort({update: -1}).limit(num)
+		.then(res => {
+			return res
+		})
+		.catch(err => console.log(err))
+}
+
+
+
+/*
+getLastUpdate()
+	.then(res => {
+		console.log(res)
+	})
+	.catch(err => console.log(err))
+*/
+
+/*
+// 指定书id
+getStarnumOfComment(44193)
+	.then(res => {
+		console.log(res)
+	})
+	.catch(err => console.log(err))
+// 全部
+getStarnumOfAllComment()
+	.then(res => {
+		console.log(res)
+	})
+	.catch(err => console.log(err))
+*/
+
+
+
+/*
 getMarknumOfBook(1)
 	.then(res => {
 		console.log(res)
 	})
 	.catch(err => console.log(err))
-
-
-
-
+*/
 
 
 /*
