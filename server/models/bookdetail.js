@@ -32,7 +32,7 @@ const bookdetailSchema = mongoose.Schema({
 		type: Number
 	},
 	progress: {
-		type: String
+		type: Array
 	},
 	info: {
 		type: String

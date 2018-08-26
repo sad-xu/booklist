@@ -1,7 +1,8 @@
 // 龙空精选集
 
 /* TODO: 
-	1. 评论的回复缺少数据，翻页接口未实现
+	√ 1. 评论的回复缺少数据，翻页接口未实现
+	√ 2. 评分比例 str -> arr  方便分析		
 */
 
 const axios = require('axios')
@@ -42,7 +43,8 @@ function saveBookdetail(obj) {
 const LIST_URL = 'http://www.yousuu.com/topshow/digest?page='  // 列表
 const DETAIL_URL = 'http://www.yousuu.com/book/'               // 详情
 const COMMENT_URL = 'http://www.yousuu.com/ajax/nextcomment?' // 评论 bid=116784&nexttime=1534058196708
-const REPLY_URL = 'http://www.yousuu.com/ajax/getonecomment?cid='  // 评论的回复
+// const REPLY_URL = 'http://www.yousuu.com/ajax/getonecomment?cid='  // 评论的回复 (包括评论)
+const REPLY_URL = 'http://www.yousuu.com/ajax/getcommentreply?'  // 仅回复 cid=579c3d36065b5026297b9437&t=1482162897000
 
 /**************** 请求 *********************/
 // 列表爬虫入口 
@@ -82,7 +84,7 @@ function getListData(d) {
 		obj.auth = tds.eq(1).text()
 		obj.score = Number(tds.eq(2).text())
 		
-		// saveBooklist(obj)                            // save list!
+		saveBooklist(obj)                            				// save list!!!!!
 		console.log('书' + obj.id + '获取成功')
 		setTimeout(function() {
 			// console.log('setTimeout', index)
@@ -123,6 +125,7 @@ function detailSpider(id, name) {
 */
 function getDetailData(d, id, name) {
 	const $ = cheerio.load(d)
+	if ($('.progress').text().length === 0) return  // 找不到此书
 	let obj = {}
 	// 封面
 	let cover = $('.bookavatar').first().attr('src')  
@@ -138,7 +141,7 @@ function getDetailData(d, id, name) {
 	// 评价数
 	let marknum = Number($('.ys-book-averrate').first().children().last().text().match(/\d+/g)[0]) 
 	// 评分比例
-	let progress = $('.progress').text().split('%').slice(0,-1).join(';')
+	let progress = $('.progress').text().split('%').slice(0,-1).map(item => {return Number(item)})
 	// 简介
 	let bookinfo = $('#bookinfo').text()
 	obj = {
@@ -159,8 +162,8 @@ function getDetailData(d, id, name) {
 		.then(res => {
 			if (res.err == 0) {
 				obj.comment = res.commentArr;
-				console.log(obj.update)
-				// saveBookdetail(obj)             // save detail!
+				// console.log('update',obj.update)
+				saveBookdetail(obj)             // save detail!
 			}
 		})
 		.catch(err => console.log(err))
@@ -209,20 +212,28 @@ function getCommentsData(comment) {
 	let arr = []
 	wrapper.each(function(i) {
 		let item = $(this).children().first()
+		let starnum = Number($(this).find('.btn-group').children().first().find('.num').text())
 		let obj = {
 			cid: item.attr('data-cid'),  // 评论id
-			time: new Date(item.find('.small').text()).getTime()  // 评论发布时间
+			time: new Date(item.find('.small').text()).getTime(),  // 评论发布时间
+			message: $(this).find('.commentcontent').text().trim(),    // 评论内容
+			starnum: starnum // 赞同数
 		}
 		arr.push(obj)
 	})
 	// 一批20个评论
 	return Promise.all(
 			arr.map(function(item, index) {
-				return getReply(item.cid)
+				return getReply(item.cid, 1482162897000, [])
 					.then(res => {
-						res.time = item.time
-						return res
-						// console.log(res)  // 完整的评论数据  待存储
+						let obj = {
+							time: item.time,
+							message: item.message,
+							starnum: item.starnum,
+							reply: res
+						}
+						// console.log(obj)  // 完整的一条评论数据
+						return obj
 					})
 					.catch(err => console.log(err))
 			})
@@ -233,7 +244,7 @@ function getCommentsData(comment) {
 				let msg = $('#next_comment_btn').children().first().attr('onclick').split("'")
 				// bid msg[1]
 				let nexttime = msg[3]
-				console.log('下一页')
+				// console.log('下一页')
 				return [nexttime, res]
 			} else {
 				console.log('最后一页')
@@ -244,13 +255,23 @@ function getCommentsData(comment) {
 }
 
 // 回复入口
-function getReply(cid) {
-	let url = REPLY_URL + cid
+function getReply(cid, t, arr) {
+	let url = REPLY_URL + 'cid=' + cid + '&t=' + t   // cid=579c3d36065b5026297b9437&t=1482162897000
 	return axios.get(url)
 		.then(res => {
 			if (res.status === 200) {
 				let data = res.data
-				return getReplyData(data)
+				let replys = data.replys
+				replys.forEach((item, index) => {
+					arr.push(cheerio.load(item.message).text().trim())
+				})
+				if (replys.length < 10) {  // 停止
+					return arr
+				} else {   // 递归
+					let next_t = data.comment.next_t
+					return getReply(cid, next_t, arr)
+				}
+				// return getReplyData(data)
 			} else {
 				console.log('cid=' + cid + '!err' + res.status)
 			}
@@ -260,31 +281,33 @@ function getReply(cid) {
 		})
 }
 
-/* 评论详情及回复
-	message 
-	starnum
-	 // replynum
-	reply  [str]
+/* 评论回复  **废弃
+	{
+		reply:  [str]
+	}
 */
-function getReplyData(data) {
-	let obj = {}
-	let comment = data.comment
-	obj.message = cheerio.load(comment.message).text().trim()  // 评论内容
-	obj.starnum = comment.starnum ? comment.starnum : 0  // 赞同数
-	// obj.replynum = comment.replynum ? comment.replynum : 0   // 回复数
-	// 回复
-	let arr = []
-	let replys = data.replys
-	replys.forEach(function(item, index) {
-		let msg = item.message
-		arr.push(cheerio.load(msg).text().trim())
-	})
-	obj.reply = arr
-	return obj
-}
+// function getReplyData(data) {
+// 	let obj = {}
+// 	let comment = data.comment
+// 	obj.message = cheerio.load(comment.message).text().trim()  // 评论内容
+// 	obj.starnum = comment.starnum ? comment.starnum : 0  // 赞同数
+// 	// obj.replynum = comment.replynum ? comment.replynum : 0   // 回复数
+// 	// 回复  需要另发请求
+// 	let arr = []
+// 	// 
+
+	// let replys = data.replys
+	// replys.forEach(function(item, index) {
+	// 	let msg = item.message
+	// 	arr.push(cheerio.load(msg).text().trim())
+	// })
+// 	obj.reply = arr
+// 	return obj
+// }
 
 
 // pageMax = 16
+
 listSpider(1)
 // detailSpider(22713, 'xxxxx')
-// getComments(22713, 1534060143850, {id:22713,comment:[]})
+// getComments(22713, 1534060143850,[])
