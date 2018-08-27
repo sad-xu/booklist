@@ -18,10 +18,6 @@ mongoose.Promise = global.Promise;
 */ 
 function getScoreOfBook(sort = -1, num = 10) {
 	return Booklist.find().sort({score: sort}).limit(num)
-		.then(res => {
-			return res
-		})	
-		.catch(err => console.log(err))	
 }
 
 /** 
@@ -42,9 +38,7 @@ function getCommentOfBook(sort = -1, num = 10) {
 			}, {
 				$limit: num
 			}
-		]).then(res => {
-			return res
-		}).catch(err => console.log(err))
+		])
 }
 
 
@@ -55,10 +49,6 @@ function getCommentOfBook(sort = -1, num = 10) {
 */
 function getMarknumOfBook(sort = -1, num = 10) {
 	return Bookdetail.find({}, {name: 1, marknum: 1}).sort({marknum: sort}).limit(num)
-		.then(res => {
-			return res
-		})
-		.catch(err => console.log(err))
 }
 
 
@@ -69,23 +59,22 @@ function getMarknumOfBook(sort = -1, num = 10) {
 *	sort
 * num
 */
-// !!!!!  建议将progress字段修改为Array
 function getStarOfBook(star = 5, sort = -1, num = 10) {
-	let v
-	switch (star) {
-		case 1:
-			v = 1; break;
-		case 2:
-			v = 2; break;
-		case 3:
-			v = 3; break;
-		case 4:
-			v = 4; break;
-		case 5:
-			v = 5; break;
-		default:
-			v = 5;
-	}
+	return Bookdetail.aggregate(
+		[
+			{
+				$project: {
+					name: 1,
+					progress: 1,
+					val: {$slice: ['$progress', star, 1]}
+				}
+			}, {
+				$sort: {val: sort}
+			}, {
+				$limit: num
+			}
+		]
+	)
 }
 
 
@@ -110,9 +99,7 @@ function getStarnumOfCommentById(id = -1 ) {
 			}, {
 				$limit: 10
 			}
-		]).then(res => {
-			return res
-		}).catch(err => console.log(err))
+		])
 }
 // 全部评论
 function getStarnumOfAllComment() {
@@ -130,9 +117,7 @@ function getStarnumOfAllComment() {
 			}, {
 				$limit: 10
 			}
-		]).then(res => {
-			return res
-		}).catch(err => console.log(err))
+		])
 }
 
 
@@ -142,10 +127,6 @@ function getStarnumOfAllComment() {
 */
 function getLastUpdate(num = 10) {
 	return Bookdetail.find({}, {update: 1, name: 1}).sort({update: -1}).limit(num)
-		.then(res => {
-			return res
-		})
-		.catch(err => console.log(err))
 }
 
 
