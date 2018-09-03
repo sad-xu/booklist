@@ -37,6 +37,10 @@ const bookdetailSchema = mongoose.Schema({
 	info: {
 		type: String
 	},
+	tag: {
+		type: String,
+		default: ''
+	},
 	comment: [
 		{
 			message: String,

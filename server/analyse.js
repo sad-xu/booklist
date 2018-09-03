@@ -9,70 +9,79 @@ mongoose.connect('mongodb://localhost/BOOK', { useNewUrlParser: true })
 	.catch(err => console.log(err))
 mongoose.Promise = global.Promise;
 
+/** 公用方法 **/
+function chgTag(tag) {
+	let tagObj = null
+	if (tag === 'all') {
+		tagObj = {}
+	} else {
+		tagObj = {tag: tag}
+	}
+	return tagObj
+}
 
 
 /** 
-* 评分  最高/最低  小说 
-*	sort 排序方式  倒序 -1 正序 1   
-*	num  返回条数  默认10
+* 评分  最高/最低  (tag) 小说 
+* {
+*		tag 类别  默认所有
+*		sort 排序方式  倒序 -1 正序 1   
+*		num  返回条数  默认10
+*	}
 */ 
-function getScoreOfBook(sort = -1, num = 10) {
-	return Booklist.find().sort({score: sort}).limit(num)
+function getScoreOfBook({tag = 'all', sort = -1, num = 10} = {}) {
+	return Booklist.find(chgTag(tag)).sort({score: sort}).limit(num)
 }
 
 /** 
-* 评论数  最多/最少  小说
-*	sort
-* num
+* 评论数  最多/最少  (tag) 小说
+*	{
+*		tag
+*		sort
+* 	num
+* }
 */
-function getCommentOfBook(sort = -1, num = 10) {
+function getCommentOfBook({tag = 'all', sort = -1, num = 10} = {}) {
 	return Bookdetail.aggregate(
 		[
-			{
-				$project: {
-					name: 1,
-					arr_size: {$size: '$comment'}   // 数组长度
-				}
-			}, {
-				$sort: {arr_size: sort}
-			}, {
-				$limit: num
-			}
+			{ $match: chgTag(tag) },
+			{ $project: {name: 1, arr_size: {$size: '$comment'}} }, 
+			{ $sort: {arr_size: sort} }, 
+			{ $limit: num }
 		])
 }
 
 
 /*
-*	评价人数  最多/最少  小说
-*	sort
-*	num
+*	评价人数  最多/最少  (tag) 小说
+*	{
+*		tag
+*		sort
+*		num
+*	}
 */
-function getMarknumOfBook(sort = -1, num = 10) {
-	return Bookdetail.find({}, {name: 1, marknum: 1}).sort({marknum: sort}).limit(num)
+function getMarknumOfBook({tag = 'all', sort = -1, num = 10} = {}) {
+	return Bookdetail.find(chgTag(tag), {name: 1, marknum: 1}).sort({marknum: sort}).limit(num)
 }
 
 
 
 /*
-*	5/4/3/2/1星比例  高/低  小说
-*	star  5 4 3 2 1
-*	sort
-* num
+*	5/4/3/2/1星比例  高/低 (tag) 小说
+*	{
+*		tag
+*		star  5 4 3 2 1
+*		sort
+* 	num
+* }
 */
-function getStarOfBook(star = 5, sort = -1, num = 10) {
+function getStarOfBook({tag = 'all', star = 5, sort = -1, num = 10} = {}) {
 	return Bookdetail.aggregate(
 		[
-			{
-				$project: {
-					name: 1,
-					progress: 1,
-					val: {$slice: ['$progress', star, 1]}
-				}
-			}, {
-				$sort: {val: sort}
-			}, {
-				$limit: num
-			}
+			{ $match: chgTag(tag) },
+			{ $project: {name: 1, progress: 1, val: {$slice: ['$progress', star, 1]}} }, 
+			{ $sort: {val: sort} }, 
+			{ $limit: num }
 		]
 	)
 }
@@ -81,52 +90,39 @@ function getStarOfBook(star = 5, sort = -1, num = 10) {
 /*
 *	本书 点赞数   最多  评论
 *	id
-*	
 */
 function getStarnumOfCommentById(id = -1 ) {
 	return Bookdetail.aggregate(
 		[
-			{$match: {id: id}},
-			{$unwind: '$comment'},
-			{
-				$project: {
-					name: 1,
-					msg: '$comment.message',
-					num: '$comment.starnum'
-				}
-			}, {
-				$sort: {num: -1}
-			}, {
-				$limit: 10
-			}
+			{ $match: {id: id} },
+			{ $unwind: '$comment' },
+			{ $project: {name: 1, msg: '$comment.message', num: '$comment.starnum'} }, 
+			{ $sort: {num: -1} }, 
+			{ $limit: 10 }
 		])
 }
-// 全部评论
-function getStarnumOfAllComment() {
+// 全部/tag 评论
+function getStarnumOfAllComment(tag = 'all') {
 	return Bookdetail.aggregate(
 		[
-			{$unwind: '$comment'},
-			{
-				$project: {
-					name: 1,
-					msg: '$comment.message',
-					num: '$comment.starnum'
-				}
-			}, {
-				$sort: {num: -1}
-			}, {
-				$limit: 10
-			}
+			{ $match: chgTag(tag) },
+			{ $unwind: '$comment' },
+			{ $project: {name: 1, msg: '$comment.message', num: '$comment.starnum'} },
+			{ $sort: {num: -1} },
+			{ $limit: 10 }
 		])
 }
 
 
 /*
 *	最近更新
-*	num
+* {
+*		tag
+*		num
+*	}
 */
-function getLastUpdate(num = 10) {
-	return Bookdetail.find({}, {update: 1, name: 1}).sort({update: -1}).limit(num)
+function getLastUpdate({tag = 'all', num = 10} = {}) {
+	return Bookdetail.find(chgTag(tag), {update: 1, name: 1}).sort({update: -1}).limit(num)
 }
 
 
@@ -166,7 +162,7 @@ getMarknumOfBook(1)
 
 
 /*
-getCommentOfBook(1)
+getCommentOfBook({tag: '玄幻奇幻'})
 	.then(res => {
 		console.log(res)
 	})
@@ -174,7 +170,7 @@ getCommentOfBook(1)
 */
 
 /*
-getScoreOfBook(1, 10)
+getScoreOfBook({tag: '科幻灵异', num: 5})
 	.then(res => {
 		let arr = res.map((item, index) => {
 			return {

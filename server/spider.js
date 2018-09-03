@@ -3,6 +3,8 @@
 /* TODO: 
 	√ 1. 评论的回复缺少数据，翻页接口未实现
 	√ 2. 评分比例 str -> arr  方便分析		
+	3. 详情库增加类别字段 tag
+		 列表库增加封面字段
 */
 
 const axios = require('axios')
@@ -122,6 +124,7 @@ function detailSpider(id, name) {
 	marknum 评价数
 	progress 评分比例
 	info
+	tag //new!
 */
 function getDetailData(d, id, name) {
 	const $ = cheerio.load(d)
@@ -144,6 +147,8 @@ function getDetailData(d, id, name) {
 	let progress = $('.progress').text().split('%').slice(0,-1).map(item => {return Number(item)})
 	// 简介
 	let bookinfo = $('#bookinfo').text()
+	// tag
+	let tag = $('#booktag').children().first().text()
 	obj = {
 		id: id,
 		name: name,
@@ -155,6 +160,7 @@ function getDetailData(d, id, name) {
 		marknum: marknum,
 		progress: progress,
 		info: bookinfo,
+		tag: tag,
 		comment: []
 	}
 	// 评论区
