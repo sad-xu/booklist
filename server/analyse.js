@@ -86,36 +86,8 @@ function getStarOfBook({tag = 'all', star = 5, sort = -1, num = 10} = {}) {
 	)
 }
 
-
 /*
-*	本书 点赞数   最多  评论
-*	id
-*/
-function getStarnumOfCommentById(id = -1 ) {
-	return Bookdetail.aggregate(
-		[
-			{ $match: {id: id} },
-			{ $unwind: '$comment' },
-			{ $project: {name: 1, msg: '$comment.message', num: '$comment.starnum'} }, 
-			{ $sort: {num: -1} }, 
-			{ $limit: 10 }
-		])
-}
-// 全部/tag 评论
-function getStarnumOfAllComment(tag = 'all') {
-	return Bookdetail.aggregate(
-		[
-			{ $match: chgTag(tag) },
-			{ $unwind: '$comment' },
-			{ $project: {name: 1, msg: '$comment.message', num: '$comment.starnum'} },
-			{ $sort: {num: -1} },
-			{ $limit: 10 }
-		])
-}
-
-
-/*
-*	最近更新
+*	最近更新 小说
 * {
 *		tag
 *		num
@@ -126,6 +98,88 @@ function getLastUpdate({tag = 'all', num = 10} = {}) {
 }
 
 
+/*
+*	本书/tag/all 点赞数 最多 的 评论
+* {
+*		id/tag   
+* 	num
+* }
+*/
+function getStarnumOfComment({id = undefined, tag = 'all', num = 10} = {}) {
+	let obj = {}
+	if (id) {  // id
+		obj = {id: id}
+	} else {  // tag
+		obj = chgTag(tag)
+	}
+	return Bookdetail.aggregate(
+		[
+			{ $match: obj },
+			{ $unwind: '$comment' },
+			{ $project: {name: 1, msg: '$comment.message', num: '$comment.starnum'} }, 
+			{ $sort: {num: -1} }, 
+			{ $limit: num }
+		]
+	)
+}
+
+
+/*
+*	本书/tag/all 回复数 最多 的评论
+* {
+*		id/tag
+*   num
+* }
+*/
+function getReplyNumOfComment({id = undefined, tag = 'all', num = 10} = {}) {
+	let obj = {}
+	if (id) {	//id
+		obj = {id: id}
+	} else {	// tag
+		obj = chgTag(tag)
+	}
+	return Bookdetail.aggregate(
+		[
+			{ $match: obj },
+			{ $unwind: '$comment' },
+			{ $project: {name: 1, msg: '$comment.message', size: {$size: '$comment.reply'}} },  // $comment 
+			{ $sort: {size: -1} }, 
+			{ $limit: num }
+		]
+	)
+}
+
+/*
+*	本书/tag/all 字数 最多 的评论        // 字数最多300， 考虑修改为精选评论
+* {
+*		id/tag
+*		num
+*	}
+*/
+function getWordNumOfComment({id = undefined, tag = 'all', num = 10} = {}) {
+	let obj = {}
+	if (id) {
+		obj = {id: id}
+	} else {
+		obj = chgTag(tag)
+	}
+	return Bookdetail.aggregate(
+		[
+			{ $match: obj },
+			{ $unwind: '$comment' },
+			{ $project: {name: 1, msg: '$comment.message', wordNum: {$strLenCP: '$comment.message'}} },
+			{ $sort: {wordNum: -1} },
+			{ $limit: num }
+		]
+	)
+}
+
+
+// getWordNumOfComment({})
+// 	.then(res => {
+// 		console.log(res)
+// 	})
+// 	.catch(err => console.log(err))
 
 /*
 getLastUpdate()
