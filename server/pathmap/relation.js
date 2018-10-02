@@ -1,61 +1,110 @@
-function relation() {
-	var a, b, c, d, e, f = "id",
-		g = 15,
-		h = 600,
-		i = 600,
-		j = -30,
-		k = 20,
-		l = 2;
+function Relation() {
+	let nodeData, 
+			linkData, 
+			force,   // 力学仿真模型 
+			canvas,
+			ctx, 
+			ID = "id",    // id
+			radius = 15,  // 半径
+			width = 600,	// 宽
+			height = 600, // 高
+			strength = -30,      // 节点间作用力
+			distance = 20, // 连接线长度
+			lineWidth = 2;
 	this.init = function() {
-		c = d3.forceSimulation().force("charge", d3.forceManyBody().strength(j)).force("center", d3.forceCenter(h / 2, i / 2)).force("collide", d3.forceCollide(1.2 * g)), c.nodes(a).on("tick", this.render), c.force("link", d3.forceLink().links(b).id(function(a) {
-			return a[f]
-		}).distance(k)), this.initDrag(), e = d.getContext("2d"), this.restart(), this.pause()
-	}, this.render = function() {
-		e.clearRect(0, 0, h, i), e.lineWidth = l, e.strokeStyle = "black", e.beginPath(), b.forEach(function(a) {
-			e.moveTo(a.source.x, a.source.y), e.lineTo(a.target.x, a.target.y)
-		}), e.stroke(), e.lineWidth = 3, e.strokeStyle = "black", a.forEach(function(a) {
-			e.fillStyle = a.color, e.beginPath(), e.arc(a.x, a.y, a.radius, 0, 2 * Math.PI), e.fill(), e.stroke()
-		}), e.font = "14px Comic Sans MS", e.fillStyle = "black", e.textAlign = "center", a.forEach(function(a) {
-			e.fillText(a.name, a.x, a.y + 2.5 * a.radius)
+		force = d3.forceSimulation()
+					.force("charge", d3.forceManyBody().strength(strength))
+					.force("center", d3.forceCenter(width / 2, height / 2))
+					.force("collide", d3.forceCollide(1.2 * radius)), force.nodes(nodeData)
+					.on("tick", this.render) 
+		force.force("link", d3.forceLink().links(linkData).id(obj => obj[ID]).distance(distance))
+		this.initDrag()
+		ctx = canvas.getContext("2d")
+		this.restart()
+		this.pause()
+	}, 
+	this.render = function() {
+		ctx.clearRect(0, 0, width, height)
+		ctx.lineWidth = lineWidth
+		ctx.strokeStyle = "black"
+		ctx.beginPath()
+		linkData.forEach(link => {
+			ctx.moveTo(link.source.x, link.source.y)
+			ctx.lineTo(link.target.x, link.target.y)
 		})
-	}, this.initDrag = function() {
-		function a() {
-			return c.find(d3.event.x, d3.event.y)
-		}
-
-		function b() {
-			d3.event.active || c.alphaTarget(.3).restart(), d3.event.subject.fx = d3.event.subject.x, d3.event.subject.fy = d3.event.subject.y
-		}
-
-		function e() {
-			d3.event.subject.fx = d3.event.x, d3.event.subject.fy = d3.event.y
-		}
-
-		function f() {
-			d3.event.active || c.alphaTarget(0), d3.event.subject.fx = null, d3.event.subject.fy = null
-		}
-		d3.select(d).call(d3.drag().container(d).subject(a).on("start", b).on("drag", e).on("end", f))
-	}, this.pause = function() {
-		c.stop()
-	}, this.run = function() {
-		c.restart()
-	}, this.restart = function() {
-		c.alpha(1), this.run()
-	}, this.setNodes = function(b) {
-		a = b
-	}, this.setLinks = function(a) {
-		b = a
-	}, this.setId = function(a) {
-		f = a
-	}, this.setRadius = function(a) {
-		g = a
-	}, this.setCanvas = function(a) {
-		d = a
-	}, this.setSize = function(a, b) {
-		h = a, i = b
-	}, this.setCharge = function(a) {
-		j = a
-	}, this.setLinkLength = function(a) {
-		k = a
+		ctx.stroke()
+		ctx.lineWidth = 3
+		ctx.strokeStyle = "black"
+		nodeData.forEach(node => {
+			ctx.fillStyle = node.color
+			ctx.beginPath()
+			ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI)
+			ctx.fill()
+			ctx.stroke()
+		})
+		ctx.font = "14px Comic Sans MS"
+		ctx.fillStyle = "black"
+		ctx.textAlign = "center"
+		nodeData.forEach(node => ctx.fillText(node.name, node.x, node.y + 2.5 * node.radius))
+	}, 
+	this.initDrag = function() {
+		d3.select(canvas)
+			.call(
+				d3.drag()
+					.container(canvas)
+					.subject(() => force.find(d3.event.x, d3.event.y))
+					.on("start", () => {
+						let e = d3.event
+						e.active || force.alphaTarget(.3).restart()
+						e.subject.fx = e.subject.x
+						e.subject.fy = e.subject.y
+					})
+					.on("drag", () => {
+						let e = d3.event
+						e.subject.fx = e.x
+					 	e.subject.fy = e.y
+					})
+					.on("end", () => {
+						let e = d3.event
+						e.active || force.alphaTarget(0)
+					 	e.subject.fx = null
+					 	e.subject.fy = null
+					})
+			)
+	}, 
+	this.pause = function() {
+		force.stop()
+	}, 
+	this.run = function() {
+		force.restart()
+	}, 
+	this.restart = function() {
+		force.alpha(1)
+		this.run()
+	}, 
+	this.setNodes = function(data) {
+		nodeData = data
+	}, 
+	this.setLinks = function(data) {
+		linkData = data
+	}, 
+	this.setId = function(id) {
+		ID = id
+	}, 
+	this.setRadius = function(r) {
+		radius = r
+	}, 
+	this.setCanvas = function(dom) {
+		canvas = dom
+	}, 
+	this.setSize = function(w, h) {
+		width = w, height = h
+	}, 
+	this.setCharge = function(value) {
+		strength = value
+	}, 
+	this.setLinkLength = function(length) {
+		distance = length
 	}
 }
+
