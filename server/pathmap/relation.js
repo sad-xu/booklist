@@ -1,6 +1,6 @@
 function Relation() {
-	let nodeData, 
-			linkData, 
+	let nodeData, // 节点数据
+			linkData, // 联系数据
 			force,   // 力学仿真模型 
 			canvas,
 			ctx, 
@@ -10,13 +10,57 @@ function Relation() {
 			height = 600, // 高
 			strength = -30,      // 节点间作用力
 			distance = 20, // 连接线长度
-			lineWidth = 2;
+			lineWidth = 2; // 连接线宽度
+
+	const drawArrow = function(p1, p2, len = 10, theta = 30) {
+
+		// p5 箭头顶点  p1p2直线 与 p2为圆心的圆的交点
+		let k = (p2[1] - p1[1]) / (p2[0] - p1[0])
+		let x5 = (radius + 3) / Math.sqrt(1 + k * k) + p2[0],
+				y5;
+		if ((x5 > p1[0] && x5 > p2[0]) || (x5 < p1[0] && x5 < p2[0])) {
+			x5 = -(radius + 3) / Math.sqrt(1 + k * k) + p2[0]
+		}
+		y5 = k * (x5 - p2[0]) + p2[1]
+
+		// 箭头另外两个点
+		let k1 = Math.tan(Math.atan(k) + theta * Math.PI / 180),
+				k2 = Math.tan(Math.atan(k) - theta * Math.PI / 180);
+
+		let x1 = len / Math.sqrt(1 + k1 * k1) + x5,
+				y1 = k1 * (x1 - x5) + y5;
+		if (Math.pow(x1 - (p1[0]+x5)/2, 2) + Math.pow(y1 - (p1[1]+y5)/2, 2) > (Math.pow(p1[0]-x5, 2) + Math.pow(p1[1]-y5, 2)) / 4) {
+			x1 = -len / Math.sqrt(1 + k1 * k1) + x5
+			y1 = k1 * (x1 - x5) + y5
+		}
+
+		let x2 = len / Math.sqrt(1 + k2 * k2) + x5,
+				y2 = k2 * (x2 - x5) + y5;
+		if (Math.pow(x2 - (p1[0]+x5)/2, 2) + Math.pow(y2 - (p1[1]+y5)/2, 2) > (Math.pow(p1[0]-x5, 2) + Math.pow(p1[1]-y5, 2)) / 4) {
+			x2 = -len / Math.sqrt(1 + k2 * k2) + x5
+			y2 = k2 * (x2 - x5) + y5
+		}
+
+		ctx.save()
+		ctx.beginPath()
+		ctx.moveTo(p1[0], p1[1])
+		ctx.lineTo(p2[0], p2[1])
+		ctx.stroke()	
+
+		ctx.moveTo(x5, y5)
+		ctx.lineTo(x1, y1)
+		ctx.lineTo(x2, y2)
+	  ctx.lineWidth = 2
+	  ctx.fill()
+	  ctx.restore()
+	}
+
 	this.init = function() {
 		force = d3.forceSimulation()
-					.force("charge", d3.forceManyBody().strength(strength))
-					.force("center", d3.forceCenter(width / 2, height / 2))
-					.force("collide", d3.forceCollide(1.2 * radius)), force.nodes(nodeData)
-					.on("tick", this.render) 
+							.force("charge", d3.forceManyBody().strength(strength))
+							.force("center", d3.forceCenter(width / 2, height / 2))
+							.force("collide", d3.forceCollide(1.2 * radius)), force.nodes(nodeData)
+							.on("tick", this.render) 
 		force.force("link", d3.forceLink().links(linkData).id(obj => obj[ID]).distance(distance))
 		this.initDrag()
 		ctx = canvas.getContext("2d")
@@ -27,12 +71,13 @@ function Relation() {
 		ctx.clearRect(0, 0, width, height)
 		ctx.lineWidth = lineWidth
 		ctx.strokeStyle = "black"
-		ctx.beginPath()
+		// ctx.beginPath()
 		linkData.forEach(link => {
-			ctx.moveTo(link.source.x, link.source.y)
-			ctx.lineTo(link.target.x, link.target.y)
+			// ctx.moveTo(link.source.x, link.source.y)
+			// ctx.lineTo(link.target.x, link.target.y)
+			drawArrow([link.source.x, link.source.y], [link.target.x, link.target.y])
 		})
-		ctx.stroke()
+		// ctx.stroke()
 		ctx.lineWidth = 3
 		ctx.strokeStyle = "black"
 		nodeData.forEach(node => {

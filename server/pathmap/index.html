@@ -5,10 +5,8 @@
 			<meta content="width=device-width,initial-scale=1"name=viewport>
 		</head>
 		<body>
-			<div class=container>
-				<div class=showcase>
-					<canvas height="600" width="1300"></canvas>
-				</div>
+			<div>
+				<canvas height="600" width="1300"></canvas>
 			</div>
 
 			<script src="https://d3js.org/d3.v5.min.js"></script>
@@ -27,21 +25,22 @@
 				var canvas = document.querySelector("canvas"),
 					width = 1300,
 					height = 600;
-				let nodeData = [{id: "0", name: "Geoff"},
-										{id: "4", name: "Geoff"},
-										{id: "1", name: "Geoff"},
-										{id: "2", name: "Geoff"},
-										{id: "3", name: "Geoff"}];
+				let nodeData = [ { id: 'express', name: 'express' },
+  { id: './app.js', name: './app.js' },
+  { id: 'body-parser', name: 'body-parser' },
+  { id: './router/api.js', name: './router/api.js' },
+  { id: 'redis', name: 'redis' } ];
 
-				let linkData = []
-				let t = 2
+				let linkData = [ { source: 'express', target: './app.js' },
+  { source: 'body-parser', target: './app.js' },
+  { source: './router/api.js', target: './app.js' },
+  { source: 'express', target: './router/api.js' },
+  { source: 'redis', target: './router/api.js' } ]
 				
-				linkData.push({source: 2, target: 3})
-				linkData.push({source: 2, target: 0})
 
 				initNodeStyle(nodeData)  // 初始化节点样式
 
-				
+				console.log(linkData)
 				const s = new Relation()
 				s.setNodes(nodeData)
 				s.setLinks(linkData)
