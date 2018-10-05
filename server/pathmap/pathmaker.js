@@ -62,8 +62,8 @@ function initData(data) {
 			linkData = [];
 	data.forEach((item, index) => {
 		let {from, to} = item
-		if (nodeArr.indexOf(from) < 0) nodeArr.push(from)
 		if (nodeArr.indexOf(to) < 0) nodeArr.push(to)
+		if (nodeArr.indexOf(from) < 0) nodeArr.push(from)
 		linkData.push({source: from, target: to})
 	})
 	nodeArr.forEach(item => {
