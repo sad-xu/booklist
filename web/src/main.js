@@ -31,7 +31,13 @@ router.afterEach((to, from) => {
 	// }
 })
 
-window.routers = [{name: NAME, router}]
+
+if (window.routers) {
+	window.routers.push({name: NAME, router})  
+} else {
+	window.routers = [{name: NAME, router}]
+}
+
 
 new Vue({
   el: '#app',
