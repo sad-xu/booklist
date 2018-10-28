@@ -1,7 +1,12 @@
 <template>
 	<div class="all">
-		<span>{{msg}}</span>
-		<router-link to="/analyse">link to...</router-link>
+		<h2>{{msg}}</h2>
+		<p>
+			<router-link to="/">jump to home ...</router-link>
+		</p>
+		<p>
+			<router-link to="/project1">jump to project1 ... </router-link>
+		</p>
 	</div>
 </template>
 
@@ -10,7 +15,7 @@
 		name: 'home',
 		data() {
 			return {
-				msg: 'ok'
+				msg: 'homePage'
 			}
 		},
 		created() {
@@ -21,6 +26,6 @@
 
 <style scoped lang="scss"  type="text/scss" >
 	.all {
-		background-color: green;
+		background-color: #fff;
 	}
 </style>

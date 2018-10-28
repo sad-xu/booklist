@@ -1,6 +1,9 @@
 <template>
 	<div class="analyse-wrapper">
-		<span>{{msg}}</span>
+		<h2>{{msg}}</h2>
+		<p>
+			<router-link to="/">back to home</router-link>
+		</p>
 	</div>
 </template>
 
@@ -9,7 +12,7 @@
 		name: 'analyse',
 		data() {
 			return {
-				msg: 'ok0'
+				msg: 'home - analyse'
 			}
 		},
 		created() {
@@ -20,6 +23,6 @@
 
 <style scoped type="text/scss" lang="scss">
 	.analyse-wrapper {
-		background-color: red;
+		background-color: #fff;
 	}
 </style>
